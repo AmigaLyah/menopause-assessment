@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora da Escala de Avaliação da Menopausa</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- React-Chartjs-2 -->
+    <script src="https://unpkg.com/react-chartjs-2@5.2.0/dist/index.umd.js"></script>
+
+    <!-- Babel para JSX -->
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
+    <style>
+        /* Base styles */
+        :root {
+            --background: 0 0% 100%;
+            --foreground: 222.2 84% 4.9%;
+            --card: 0 0% 100%;
+            --card-foreground: 222.2 84% 4.9%;
+            --primary: 222.2 47.4% 11.2%;
+            --primary-foreground: 210 40% 98%;
+            --secondary: 210 40% 96.1%;
+            --muted: 210 40% 96.1%;
+            --muted-foreground: 215.4 16.3% 46.9%;
+            --border: 214.3 31.8% 91.4%;
+        }
+
+        .card {
+            background: white;
+            border-radius: 0.5rem;
+            border: 1px solid #e2e8f0;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .button {
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .button-primary {
+            background-color: #1a365d;
+            color: white;
+        }
+
+        .button-outline {
+            border: 1px solid #e2e8f0;
+            background-color: white;
+        }
+
+        .radio-group {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1rem;
+            margin: 0.5rem 0;
+        }
+
+        .radio-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState } = React;
+        const { Bar } = ReactChartjs2;
+
+        const questions = [
+            "Falta de ar, suores, calores",
+            "Mal estar do coração (batidas do coração diferentes, saltos nos batidas, batidas mais longas, pressão)",
+            "Problemas de sono (dificuldade em conciliar o sono, em dormir a noite toda e acordar muito cedo)",
+            "Estado de ânimo depressivo (sentir-se para baixo, triste, a ponto das lágrimas, falta de vontade, mudanças de humor)",
+            "Irritabilidade (sentir-se nervosa, tensa, agressiva)",
+            "Ansiedade (inquietação interna)",
+            "Esgotamento físico e mental (queda geral em seu desempenho, falta de concentração)",
+            "Problemas sexuais (falta ou mudança sexual na satisfação e satisfação)",
+            "Problemas de bexiga (dificuldade de urinar, incontinência, desejo excessivo de urinar)",
+            "Ressecamento vaginal (sensação de ressecamento, ardência e problemas durante a relação sexual)",
+            "Problemas musculares e nas articulações (dores reumáticas e nas articulações)",
+        ];
+
+        const analyzeSomaticSymptoms = (score) => {
+            if (score <= 2) return { level: "assintomáticos ou escassos", class: "text-green-600" };
+            if (score <= 4) return { level: "leves", class: "text-yellow-600" };
+            if (score <= 8) return { level: "moderados", class: "text-orange-600" };
+            return { level: "severos", class: "text-red-600" };
+        };
+
+        const analyzePsychologicalSymptoms = (score) => {
+            if (score <= 1) return { level: "assintomáticos ou escassos", class: "text-green-600" };
+            if (score <= 3) return { level: "leves", class: "text-yellow-600" };
+            if (score <= 6) return { level: "moderados", class: "text-orange-600" };
+            return { level: "severos", class: "text-red-600" };
+        };
+
+        const analyzeUrogenitalSymptoms = (score) => {
+            if (score === 0) return { level: "assintomáticos ou escassos", class: "text-green-600" };
+            if (score === 1) return { level: "leves", class: "text-yellow-600" };
+            if (score <= 3) return { level: "moderados", class: "text-orange-600" };
+            return { level: "severos", class: "text-red-600" };
+        };
+
+        function MenopauseAssessment() {
+            const [answers, setAnswers] = useState({});
+            const [results, setResults] = useState(null);
+
+            const calculateScores = () => {
+                const somaticQuestions = [0, 1, 2];
+                const psychologicalQuestions = [3, 4, 5, 6];
+                const urogenitalQuestions = [7, 8, 9, 10];
+
+                const somatic = somaticQuestions.reduce((acc, q) => acc + parseInt(answers[q] || "0"), 0);
+                const psychological = psychologicalQuestions.reduce((acc, q) => acc + parseInt(answers[q] || "0"), 0);
+                const urogenital = urogenitalQuestions.reduce((acc, q) => acc + parseInt(answers[q] || "0"), 0);
+
+                setResults({ somatic, psychological, urogenital });
+            };
+
+            const resetForm = () => {
+                setAnswers({});
+                setResults(null);
+            };
+
+            const chartData = results ? {
+                labels: ["Sintomas somáticos", "Sintomas psicológicos", "Sintomas urogenitais"],
+                datasets: [{
+                    label: "Pontuação",
+                    data: [results.somatic, results.psychological, results.urogenital],
+                    backgroundColor: ["rgba(255, 99, 132, 0.5)", "rgba(54, 162, 235, 0.5)", "rgba(75, 192, 192, 0.5)"],
+                }],
+            } : null;
+
+            return (
+                <div className="container">
+                    <div className="card">
+                        <h2 className="text-2xl font-bold mb-4">Calculadora da Escala de Avaliação da Menopausa</h2>
+                        <p className="mb-6">
+                            A Escala de Avaliação da Menopausa avalia a qualidade de vida e os sintomas do climatério através de 11
+                            questões. Para cada questão, escolha a opção que melhor descreve sua situação atual.
+                        </p>
+                        <div className="space-y-6">
+                            {questions.map((question, index) => (
+                                <div key={index} className="space-y-2">
+                                    <label className="block font-medium">{question}</label>
+                                    <div className="radio-group">
+                                        {[0, 1, 2, 3, 4].map((value) => (
+                                            <div key={value} className="radio-item">
+                                                <input
+                                                    type="radio"
+                                                    name={`question-${index}`}
+                                                    value={value}
+                                                    checked={answers[index] === value.toString()}
+                                                    onChange={(e) => setAnswers(prev => ({ ...prev, [index]: e.target.value }))}
+                                                />
+                                                <label>{value}</label>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="mt-6 flex justify-between">
+                            <button className="button button-outline" onClick={resetForm}>
+                                Refazer Teste
+                            </button>
+                            <button className="button button-primary" onClick={calculateScores}>
+                                Calcular
+                            </button>
+                        </div>
+                    </div>
+
+                    {results && (
+                        <div className="card">
+                            <h3 className="text-xl font-bold mb-4">Resultados</h3>
+                            <div className="space-y-6">
+                                <div style={{ height: "400px" }}>
+                                    {chartData && <Bar data={chartData} options={{ responsive: true, maintainAspectRatio: false }} />}
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div className="p-4 rounded-lg bg-red-100">
+                                        <h4 className="font-semibold">Sintomas somáticos</h4>
+                                        <p className="text-2xl">{results.somatic}</p>
+                                        <p className={analyzeSomaticSymptoms(results.somatic).class}>
+                                            {analyzeSomaticSymptoms(results.somatic).level}
+                                        </p>
+                                    </div>
+                                    <div className="p-4 rounded-lg bg-blue-100">
+                                        <h4 className="font-semibold">Sintomas psicológicos</h4>
+                                        <p className="text-2xl">{results.psychological}</p>
+                                        <p className={analyzePsychologicalSymptoms(results.psychological).class}>
+                                            {analyzePsychologicalSymptoms(results.psychological).level}
+                                        </p>
+                                    </div>
+                                    <div className="p-4 rounded-lg bg-teal-100">
+                                        <h4 className="font-semibold">Sintomas urogenitais</h4>
+                                        <p className="text-2xl">{results.urogenital}</p>
+                                        <p className={analyzeUrogenitalSymptoms(results.urogenital).class}>
+                                            {analyzeUrogenitalSymptoms(results.urogenital).level}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4 text-sm">
+                                    <div className="p-4 border rounded-lg">
+                                        <h4 className="font-semibold mb-2">Análise dos Sintomas Somato-vegetativos:</h4>
+                                        <p>
+                                            Seus sintomas somáticos são classificados como{" "}
+                                            <span className={analyzeSomaticSymptoms(results.somatic).class}>
+                                                {analyzeSomaticSymptoms(results.somatic).level}
+                                            </span>.
+                                        </p>
+                                        <p className="mt-2 text-gray-600">
+                                            Classificação:<br />
+                                            - Assintomáticos ou escassos: 2 pontos ou menos<br />
+                                            - Leves: 3 a 4 pontos<br />
+                                            - Moderados: 5 a 8 pontos<br />
+                                            - Severos: mais de 9 pontos
+                                        </p>
+                                    </div>
+
+                                    <div className="p-4 border rounded-lg">
+                                        <h4 className="font-semibold mb-2">Análise dos Sintomas Psicológicos:</h4>
+                                        <p>
+                                            Seus sintomas psicológicos são classificados como{" "}
+                                            <span className={analyzePsychologicalSymptoms(results.psychological).class}>
+                                                {analyzePsychologicalSymptoms(results.psychological).level}
+                                            </span>.
+                                        </p>
+                                        <p className="mt-2 text-gray-600">
+                                            Classificação:<br />
+                                            - Assintomáticos ou escassos: 1 ponto ou menos<br />
+                                            - Leves: 2 a 3 pontos<br />
+                                            - Moderados: 4 a 6 pontos<br />
+                                            - Severos: mais de 7 pontos
+                                        </p>
+                                    </div>
+
+                                    <div className="p-4 border rounded-lg">
+                                        <h4 className="font-semibold mb-2">Análise dos Sintomas Urogenitais:</h4>
+                                        <p>
+                                            Seus sintomas urogenitais são classificados como{" "}
+                                            <span className={analyzeUrogenitalSymptoms(results.urogenital).class}>
+                                                {analyzeUrogenitalSymptoms(results.urogenital).level}
+                                            </span>.
+                                        </p>
+                                        <p className="mt-2 text-gray-600">
+                                            Classificação:<br />
+                                            - Assintomáticos ou escassos: 0 pontos<br />
+                                            - Leves: 1 ponto<br />
+                                            - Moderados: 2 a 3 pontos<br />
+                                            - Severos: 4 pontos ou mais
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        // Render the app
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<MenopauseAssessment />);
+    </script>
+</body>
+</html>
